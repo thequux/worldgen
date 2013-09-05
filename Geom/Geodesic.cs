@@ -9,6 +9,7 @@ namespace Geom
 
 		List<Point3d> vertices;
 		List<biline> edges;
+		List<triangle> faces;
 		SortedSet<int>[] _Neighbors;
 
 		private class biline
@@ -61,7 +62,7 @@ namespace Geom
 		{
 			vertices = new List<Point3d>(12);
 			edges = new List<biline>(30);
-			var faces = new List<triangle>(20);
+			faces = new List<triangle>(20);
 			double at12 = Math.Atan(1.0/2);
 			double rat12 = Math.Cos(at12);
 			double hat12 = Math.Sin(at12);
@@ -131,22 +132,6 @@ namespace Geom
 				_Neighbors[edge.P1].Add(edge.P2);
 				_Neighbors[edge.P2].Add(edge.P1);
 			}
-
-#if true
-			// Dump in skeleton
-			Console.WriteLine("SKEL");
-			Console.WriteLine("{0} {1}", vertices.Count, edges.Count);
-			for (int i = 0; i < vertices.Count; i++) {
-				Console.WriteLine("{0} {1} {2}",
-				                  vertices[i].X,
-				                  vertices[i].Y,
-				                  vertices[i].Z);
-			}
-			for (int i = 0; i < edges.Count; i++) {
-				biline e = edges[i];
-				Console.WriteLine("2 {0} {1}", e.P1, e.P2);
-			}
-#endif
 		}
 
 		public GridPoint this [int idx] {
@@ -163,6 +148,26 @@ namespace Geom
 		public IEnumerable<int> Neighbors(int point)
 		{
 			return _Neighbors[point];
+		}
+
+		public void Dump(IList<double> overlay, System.IO.TextWriter output)
+		{
+			// Dump in skeleton
+			output.WriteLine("OFF");
+			output.WriteLine("{0} {1} {2}", vertices.Count, faces.Count, edges.Count);
+			for (int i = 0; i < vertices.Count; i++) {
+				output.WriteLine("{0} {1} {2}",
+				                 vertices[i].X,
+				                 vertices[i].Y,
+				                 vertices[i].Z);
+			}
+			for (int i = 0; i < faces.Count; i++) {
+				var f = faces[i];
+				f.Update(edges);
+				output.WriteLine("3 {0} {1} {2}", f.V[0], f.V[1], f.V[2]);
+			}
+
+
 		}
 	}
 }

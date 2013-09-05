@@ -82,6 +82,7 @@
     </Compile>
     <Compile Include="Geom\IGrid.cs" />
     <Compile Include="Geom\GridPoint.cs" />
+    <Compile Include="Geom\Overlay.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
