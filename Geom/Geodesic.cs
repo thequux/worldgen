@@ -149,10 +149,15 @@ namespace Geom
 #endif
 		}
 
-		public Point3d this [int idx] {
+		public GridPoint this [int idx] {
 			get {
-				return vertices[idx];
+				return new GridPoint(this, idx);
 			}
+		}
+
+		public Point3d Location(int idx)
+		{
+			return vertices[idx];
 		}
 
 		public IEnumerable<int> Neighbors(int point)

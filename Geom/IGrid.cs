@@ -9,9 +9,11 @@ namespace Geom
 		 * IGrid is a mapping of points to a sphere. Each point has a set of neigbors and a 3-dimensional location
 		 */
 
-		Geom.Point3d this [int index] {
+		GridPoint this [int index] {
 			get;
 		}
+
+		Point3d Location(int index);
 
 		IEnumerable<int> Neighbors(int index);
 	}

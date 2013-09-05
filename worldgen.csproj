@@ -63,6 +63,7 @@
       <Private>False</Private>
       <Package>opentk</Package>
     </Reference>
+    <Reference Include="System.Data.Linq" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="gtk-gui\gui.stetic">
@@ -80,6 +81,7 @@
       <DependentUpon>Point3d.cs</DependentUpon>
     </Compile>
     <Compile Include="Geom\IGrid.cs" />
+    <Compile Include="Geom\GridPoint.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
