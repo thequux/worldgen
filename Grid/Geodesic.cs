@@ -4,10 +4,13 @@ using Geom;
 
 namespace Grid
 {
-	public class Geodesic
+	// Really more "topology" than "grid", but "grid" will do.
+	public class Geodesic : IGrid
 	{
+
 		List<Point3d> vertices;
 		List<biline> edges;
+		SortedSet<int>[] _Neighbors;
 
 		private class biline
 		{
@@ -45,6 +48,13 @@ namespace Grid
 				V[1] = edges[L[0]].P2;
 				var e = edges[L[1]];
 				V[2] = (e.P1 == V[0] || e.P1 == V[1]) ? e.P2 : e.P1;
+			}
+
+			public IEnumerable<int> Vertices(IList<biline> edges)
+			{
+				var e0 = edges[L[0]];
+				var e1 = edges[L[1]];
+				return new int[] { e0.P1, e0.P2, e0.HasPoint(e1.P1) ? e1.P2 : e1.P1 };
 			}
 		}
 
@@ -112,6 +122,17 @@ namespace Grid
 				faces = newfaces;
 				edges = newedges;
 			}
+
+			// Update quick access structures
+			_Neighbors = new SortedSet<int>[vertices.Count];
+			for (int i = 0; i < vertices.Count; i++) {
+				_Neighbors[i] = new SortedSet<int>();
+			}
+			foreach (var edge in edges) {
+				_Neighbors[edge.P1].Add(edge.P2);
+				_Neighbors[edge.P2].Add(edge.P1);
+			}
+
 #if true
 			// Dump in skeleton
 			Console.WriteLine("SKEL");
@@ -127,6 +148,17 @@ namespace Grid
 				Console.WriteLine("2 {0} {1}", e.P1, e.P2);
 			}
 #endif
+		}
+
+		public Point3d this [int idx] {
+			get {
+				return vertices[idx];
+			}
+		}
+
+		public IEnumerable<int> Neighbors(int point)
+		{
+			return _Neighbors[point];
 		}
 	}
 }
