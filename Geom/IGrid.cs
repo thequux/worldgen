@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Grid
+namespace Geom
 {
 	public interface IGrid
 	{

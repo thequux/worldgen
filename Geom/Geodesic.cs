@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
-using Geom;
 
-namespace Grid
+namespace Geom
 {
 	// Really more "topology" than "grid", but "grid" will do.
 	public class Geodesic : IGrid

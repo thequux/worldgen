@@ -12,7 +12,7 @@ namespace Worldgen
 			MainWindow win = new MainWindow ();
 			win.Show ();
 			Application.Run ();*/
-			Grid.Geodesic grid = new Grid.Geodesic(3);
+			Geom.Geodesic grid = new Geom.Geodesic(3);
 		}
 	}
 }
