@@ -1,4 +1,4 @@
-using Geom;
+using Worldgen.Geom;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using Color = System.Drawing.Color;
 
-namespace Gui.OpenTK
+namespace Worldgen.Gui.OpenTK
 {
 	public class Gui : GameWindow
 	{
@@ -35,6 +35,11 @@ namespace Gui.OpenTK
 			GL.Enable(EnableCap.Lighting);
 			GL.Enable(EnableCap.Light0);
 
+		}
+
+		private void LoadShaders()
+		{
+			var assem = this.GetType().Assembly;
 		}
 
 		protected override void OnResize(EventArgs e)

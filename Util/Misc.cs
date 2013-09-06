@@ -1,6 +1,6 @@
 using System;
 
-namespace Util
+namespace Worldgen.Util
 {
 	public static class Misc
 	{

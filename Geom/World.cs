@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Worldgen.Util;
 
-namespace Geom
+namespace Worldgen.Geom
 {
-	public class Layer<TValue> : Util.ObjectWithID
+	public class Layer<TValue> : ObjectWithID
 	{
 	}
 
@@ -14,13 +15,13 @@ namespace Geom
 		public static readonly Layer<double> WaterTable = new Layer<double>();
 		public readonly Grid Grid;
 		public readonly Mutex Mtx;
-		private IDictionary<Util.ObjectWithID, System.Collections.IList> Layers;
+		private IDictionary<ObjectWithID, System.Collections.IList> Layers;
 
 		public World(Grid g)
 		{
 			Mtx = new Mutex();
 			Grid = g;
-			Layers = new Dictionary<Util.ObjectWithID, System.Collections.IList>();
+			Layers = new Dictionary<ObjectWithID, System.Collections.IList>();
 			AddLayer(Height, Uniform(6378.1));
 
 		}

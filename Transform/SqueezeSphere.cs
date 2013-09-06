@@ -1,8 +1,8 @@
 using System;
-using Geom;
-using Util;
+using Worldgen.Geom;
+using Worldgen.Util;
 
-namespace Transform
+namespace Worldgen.Transform
 {
 	public class SqueezeSphere
 	{

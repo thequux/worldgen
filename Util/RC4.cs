@@ -1,6 +1,6 @@
 using System;
 
-namespace Util
+namespace Worldgen.Util
 {
 	sealed public class RC4 : IRandGen
 	{

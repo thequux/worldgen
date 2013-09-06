@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Geom
+namespace Worldgen.Geom
 {
 	public struct GridPoint
 	{

@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Geom
+namespace Worldgen.Geom
 {
 	// Really more "topology" than "grid", but "grid" will do.
 	public class Geodesic : Grid

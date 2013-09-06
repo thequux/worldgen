@@ -1,9 +1,9 @@
 using System;
 using System.Threading;
 using Gtk;
-using Geom;
-using Util;
-using Transform;
+using Worldgen.Geom;
+using Worldgen.Util;
+using Worldgen.Transform;
 
 namespace Worldgen
 {

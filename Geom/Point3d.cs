@@ -4,7 +4,7 @@ using System;
 using OpenTK;
 
 #endif
-namespace Geom
+namespace Worldgen.Geom
 {
 	public struct Point3d
 	{
