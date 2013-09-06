@@ -76,8 +76,14 @@ namespace Geom
 				edges.Add(new biline(i, (i + 2) % 10));
 				edges.Add(new biline(i, (i+1) % 10));
 				edges.Add(new biline(i, (vp > 0) ? 10 : 11));
-				faces.Add(new triangle(i * 3, i * 3 + 1, (i * 3 + 4) % 30));
-				faces.Add(new triangle(i * 3, i * 3 + 2, (i * 3 + 8) % 30));
+				if (vp > 0) {
+					faces.Add(new triangle(i * 3, i * 3 + 1, (i * 3 + 4) % 30));
+					faces.Add(new triangle(i * 3 + 2, i * 3, (i * 3 + 8) % 30));
+				} else {
+					faces.Add(new triangle(i * 3 + 1, i * 3, (i * 3 + 4) % 30));
+					faces.Add(new triangle(i * 3, i * 3 + 2, (i * 3 + 8) % 30));
+
+				}
 				vp = -vp;
 			}
 			vertices.Add(new Point3d(0, 0, 1));
@@ -118,7 +124,7 @@ namespace Geom
 						newedges.Add(new biline(vs[2*j+1], vs[(j * 2 + 5) % 6]));
 						newfaces.Add(new triangle(es[(j * 2) % 6], es[(j * 2 + 5) % 6], centerEdges[j]));
 					}
-					newfaces.Add(new triangle(centerEdges[0], centerEdges[1], centerEdges[2]));
+					newfaces.Add(new triangle(centerEdges[0], centerEdges[2], centerEdges[1]));
 				}
 				faces = newfaces;
 				edges = newedges;

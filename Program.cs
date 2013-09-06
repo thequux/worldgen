@@ -19,17 +19,16 @@ namespace Worldgen
 
 		private MainClass(string[] args)
 		{
-			Application.Init();
-
 			// Need these for both the window and the simulation thread.
 			world = new World(new Geodesic(6));
 
 			Thread simthread = new Thread(SimLoop);
 			simthread.Start();
 
-			MainWindow win = new MainWindow();
-			win.Show();
-			Application.Run();
+#if OpenTK
+			var gui = new Gui.OpenTK.Gui(world);
+			gui.Run(30.0, 30.0);
+#endif
 		}
 
 		public void SimLoop()

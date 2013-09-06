@@ -1,5 +1,9 @@
 using System;
 
+#if OpenTK
+using OpenTK;
+
+#endif
 namespace Geom
 {
 	public struct Point3d
@@ -81,5 +85,11 @@ namespace Geom
 		{
 			return string.Format("Point3d<{0},{1},{2}>", this.X, this.Y, this.Z);
 		}
+#if OpenTK
+		public static implicit operator Vector3d(Point3d pt)
+		{
+			return new Vector3d(pt.X, pt.Y, pt.Z);
+		}
+#endif
 	}
 }
