@@ -69,5 +69,17 @@ namespace Geom
 		{
 			return p * -1;
 		}
+
+		public double Dot(Point3d pt)
+		{
+			return this.X * pt.X 
+				+ this.Y * pt.Y
+				+ this.Z * pt.Z;
+		}
+
+		public string ToString()
+		{
+			return string.Format("Point3d<{0},{1},{2}>", this.X, this.Y, this.Z);
+		}
 	}
 }

@@ -1,10 +1,11 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Geom
 {
 	// Really more "topology" than "grid", but "grid" will do.
-	public class Geodesic : IGrid
+	public class Geodesic : Grid
 	{
 
 		List<Point3d> vertices;
@@ -50,7 +51,7 @@ namespace Geom
 				V[2] = (e.P1 == V[0] || e.P1 == V[1]) ? e.P2 : e.P1;
 			}
 
-			public IEnumerable<int> Vertices(IList<biline> edges)
+			public IList<int> Vertices(IList<biline> edges)
 			{
 				var e0 = edges[L[0]];
 				var e1 = edges[L[1]];
@@ -134,40 +135,94 @@ namespace Geom
 			}
 		}
 
-		public GridPoint this [int idx] {
+		public override GridPoint this [int idx] {
 			get {
 				return new GridPoint(this, idx);
 			}
 		}
 
-		public Point3d Location(int idx)
+		public override Point3d Location(int idx)
 		{
 			return vertices[idx];
 		}
 
-		public IEnumerable<int> Neighbors(int point)
+		public override IEnumerable<int> Neighbors(int point)
 		{
 			return _Neighbors[point];
 		}
 
-		public void Dump(IList<double> overlay, System.IO.TextWriter output)
-		{
-			// Dump in skeleton
-			output.WriteLine("OFF");
-			output.WriteLine("{0} {1} {2}", vertices.Count, faces.Count, edges.Count);
-			for (int i = 0; i < vertices.Count; i++) {
-				output.WriteLine("{0} {1} {2}",
-				                 vertices[i].X,
-				                 vertices[i].Y,
-				                 vertices[i].Z);
+		public override int Count {
+			get {
+				return vertices.Count;
 			}
-			for (int i = 0; i < faces.Count; i++) {
-				var f = faces[i];
-				f.Update(edges);
-				output.WriteLine("3 {0} {1} {2}", f.V[0], f.V[1], f.V[2]);
-			}
-
-
 		}
+		#region Face enumeration
+
+		protected class GeodesicFaceEnumerator : IEnumerator<Face>
+		{
+			protected Geodesic Parent;
+			int curpos;
+
+			public GeodesicFaceEnumerator(Geodesic parent)
+			{
+				Parent = parent;
+				curpos = -1;
+			}
+
+			public Face Current {
+				get {
+					IList<int> vs = Parent.faces[curpos].Vertices(Parent.edges);
+					return new Face(vs[0], vs[1], vs[2]);
+				}
+			}
+
+			object IEnumerator.Current {
+				get {
+					return Current;
+				}
+			}
+
+			void IDisposable.Dispose()
+			{
+			}
+
+			bool IEnumerator.MoveNext()
+			{
+				curpos++;
+				return curpos < Parent.faces.Count;
+			}
+
+			void IEnumerator.Reset()
+			{
+				curpos = -1;
+			}
+		}
+
+		protected class GeodesicFaceEnumerable : IEnumerable<Face>
+		{
+			protected Geodesic Parent;
+
+			public GeodesicFaceEnumerable(Geodesic parent)
+			{
+				Parent = parent;
+			}
+
+			public IEnumerator<Face> GetEnumerator()
+			{
+				return new GeodesicFaceEnumerator(Parent);
+			}
+
+			IEnumerator IEnumerable.GetEnumerator()
+			{
+				return GetEnumerator();
+			}
+		}
+
+		public override IEnumerable<Face> Faces {
+			get {
+				return new GeodesicFaceEnumerable(this);
+			}
+		}
+		#endregion
 	}
 }

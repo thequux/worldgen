@@ -6,9 +6,9 @@ namespace Geom
 	public struct GridPoint
 	{
 		public int Index;
-		private IGrid grid;
+		private Grid grid;
 
-		public GridPoint(IGrid grid, int idx)
+		public GridPoint(Grid grid, int idx)
 		{
 			Index = idx;
 			this.grid = grid;

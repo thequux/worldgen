@@ -80,9 +80,17 @@
     <Compile Include="Geom\Geodesic.cs">
       <DependentUpon>Point3d.cs</DependentUpon>
     </Compile>
-    <Compile Include="Geom\IGrid.cs" />
     <Compile Include="Geom\GridPoint.cs" />
     <Compile Include="Geom\Overlay.cs" />
+    <Compile Include="Geom\Grid.cs" />
+    <Compile Include="Transform\SqueezeSphere.cs" />
+    <Compile Include="Util\RC4.cs" />
+    <Compile Include="Util\IRandGen.cs" />
+    <Compile Include="Util\Misc.cs" />
+    <Compile Include="Geom\World.cs" />
+    <Compile Include="Util\ObjectWithID.cs" />
+    <Compile Include="Util\ProgressBar.cs" />
+    <Compile Include="Util\StringExts.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
