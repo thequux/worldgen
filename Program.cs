@@ -1,5 +1,7 @@
 using System;
+using System.Threading;
 using Gtk;
+using Geom;
 using Util;
 using Transform;
 
@@ -7,20 +9,35 @@ namespace Worldgen
 {
 	class MainClass
 	{
+		World world;
+
 		public static void Main(string[] args)
 		{
-			/*
-			Application.Init ();
-			MainWindow win = new MainWindow ();
-			win.Show ();
-			Application.Run ();*/
-			Geom.Geodesic grid = new Geom.Geodesic(6);
-			Geom.World w = new Geom.World(grid);
-			Util.IRandGen rg = new Util.RC4("Key");
 
-			SqueezeSphere xform = new SqueezeSphere(w, rg);
+			new MainClass(args);
+		}
+
+		private MainClass(string[] args)
+		{
+			Application.Init();
+
+			// Need these for both the window and the simulation thread.
+			world = new World(new Geodesic(6));
+
+			Thread simthread = new Thread(SimLoop);
+			simthread.Start();
+
+			MainWindow win = new MainWindow();
+			win.Show();
+			Application.Run();
+		}
+
+		public void SimLoop()
+		{
+			IRandGen rg = new RC4("Key");
+			SqueezeSphere xform = new SqueezeSphere(world, rg.Fork());
 			xform.Apply(10000);
-			Geom.Grid.Dump(grid, w.GetLayer(Geom.World.Height), System.Console.Out);
+			Grid.Dump(world.Grid, world.GetLayer(World.Height), Console.Out);
 
 		}
 	}

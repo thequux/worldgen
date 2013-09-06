@@ -29,6 +29,11 @@ namespace Util
 			Init(key);
 		}
 
+		public RC4(IRandGen cloneFrom)
+		{
+			Init(cloneFrom.NextBuffer(256));
+		}
+
 		public RC4(string key)
 		{
 			System.Text.Encoding enc = new System.Text.UTF8Encoding(false, true);
@@ -50,6 +55,11 @@ namespace Util
 			swap(ref state[i], ref state[j]);
 			byte k = state[(state[i] + state[j]) % 256];
 			return k;
+		}
+
+		public IRandGen Fork()
+		{
+			return new RC4(this);
 		}
 	}
 }

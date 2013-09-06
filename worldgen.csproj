@@ -64,6 +64,7 @@
       <Package>opentk</Package>
     </Reference>
     <Reference Include="System.Data.Linq" />
+    <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="gtk-gui\gui.stetic">
@@ -91,6 +92,7 @@
     <Compile Include="Util\ObjectWithID.cs" />
     <Compile Include="Util\ProgressBar.cs" />
     <Compile Include="Util\StringExts.cs" />
+    <Compile Include="Gui\OpenTK\Gui.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>

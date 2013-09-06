@@ -5,10 +5,26 @@ namespace Util
 	public interface IRandGen
 	{
 		byte Next();
+
+		IRandGen Fork();
 	}
 
 	public static class RandUtils
 	{
+		public static byte[] NextBuffer(this IRandGen gen, int count)
+		{
+			byte[] buf = new byte[count];
+			return gen.NextBuffer(buf);
+		}
+
+		public static byte[] NextBuffer(this IRandGen gen, byte[] buf)
+		{
+			for (int i = 0; i < buf.Length; i++) {
+				buf[i] = gen.Next();
+			}
+			return buf;
+		}
+
 		public static int NextInt(this IRandGen gen)
 		{
 			// Read a big-endian integer from the generator
@@ -37,7 +53,7 @@ namespace Util
 			return ret;
 		}
 
-		public static float NextFloat(this IRandGen gen, int exp = 0)
+		public static float NextFloat(this IRandGen gen)
 		{
 			// Uniformly distributed float between 0 and 1. 
 
@@ -45,7 +61,7 @@ namespace Util
 			return (float)val / (1 << 23);
 		}
 
-		public static double NextDouble(this IRandGen gen, int exp = 0)
+		public static double NextDouble(this IRandGen gen)
 		{
 			// Uniformly distributed double between 0 and 1. 
 

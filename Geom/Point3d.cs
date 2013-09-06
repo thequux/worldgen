@@ -77,7 +77,7 @@ namespace Geom
 				+ this.Z * pt.Z;
 		}
 
-		public string ToString()
+		public override string ToString()
 		{
 			return string.Format("Point3d<{0},{1},{2}>", this.X, this.Y, this.Z);
 		}

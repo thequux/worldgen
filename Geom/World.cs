@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace Geom
 {
@@ -12,13 +13,16 @@ namespace Geom
 		public static readonly Layer<double> Height = new Layer<double>();
 		public static readonly Layer<double> WaterTable = new Layer<double>();
 		public readonly Grid Grid;
+		public readonly Mutex Mtx;
 		private IDictionary<Util.ObjectWithID, System.Collections.IList> Layers;
 
 		public World(Grid g)
 		{
+			Mtx = new Mutex();
 			Grid = g;
 			Layers = new Dictionary<Util.ObjectWithID, System.Collections.IList>();
 			AddLayer(Height, Uniform(6378.1));
+
 		}
 
 		public IList<TVal> GetLayer<TVal>(Layer<TVal> layerName)

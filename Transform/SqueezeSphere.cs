@@ -23,6 +23,7 @@ namespace Transform
 			var overlay = world.GetLayer(layer);
 			var pb = new ProgressBar(itercount);
 			for (int iter = 0; iter < itercount; iter++) {
+				world.Mtx.WaitOne();
 				pb.Update();
 				// Pick a random plane.
 				Point3d pt;
@@ -39,6 +40,7 @@ namespace Transform
 						overlay[i] -= adj;
 					}
 				}
+				world.Mtx.ReleaseMutex();
 			}
 		}
 	}
