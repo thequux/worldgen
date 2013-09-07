@@ -17,13 +17,16 @@ namespace Worldgen.Gui.OpenTK
 		private uint[,] basemapFaceData;
 		private float[] heightData, waterData;
 		private int glslProg;
+		private Quaternion viewAngle;
+		private bool errp = false;
 		// The world's grid is not going to change, so we can cache '
 
-		public Gui(World world) 
+		public Gui(World world)
 			: base(800, 600, GraphicsMode.Default, "Worldgen")
 		{
 			this.world = world;
 			VSync = VSyncMode.On;
+			viewAngle = Quaternion.Identity;
 		}
 
 		protected override void OnLoad(EventArgs e)
@@ -56,7 +59,7 @@ namespace Worldgen.Gui.OpenTK
 			GL.BindBuffer(BufferTarget.ArrayBuffer, basemapVtxBuffer);
 			GL.BindBuffer(BufferTarget.ElementArrayBuffer, basemapFaceBuffer);
 
-			basemapVtxData = new float[world.Grid.Count, 3];
+			basemapVtxData = new float[world.Grid.Count, 6];
 			for (int i = 0; i < world.Grid.Count; i++) {
 				Point3d pt = world.Grid.Location(i);
 				basemapVtxData[i, 0] = (float)pt.X;
@@ -71,7 +74,7 @@ namespace Worldgen.Gui.OpenTK
 				var gr = world.Grid;
 				var normal = Vector3.Cross(gr.Location(face.V[1]) - gr.Location(face.V[0]),
 				                           gr.Location(face.V[2]) - gr.Location(face.V[0]));
-				if (Vector3.Dot(normal, gr.Location(face.V[0])) > 0) { // BUG: this might be inverted.
+				if (Vector3.Dot(normal, gr.Location(face.V[0])) < 0) { // BUG: this might be inverted.
 					//if ((i % 2) == 0) {
 					// outward-facing, use vertices as given
 					basemapFaceData[i, 0] = (uint)face.V[0];
@@ -161,11 +164,12 @@ namespace Worldgen.Gui.OpenTK
 
 			int numParams;
 			GL.GetProgram(prog, ProgramParameter.ActiveAttributes, out numParams);
-
+			errp = false;
 			return;
 			fail:
-			//if (!from_fs)
-			System.Environment.Exit(1);
+			if (!from_fs)
+				System.Environment.Exit(1);
+			errp = true;
 		}
 
 		private string readResource(Type type, string name)
@@ -185,6 +189,7 @@ namespace Worldgen.Gui.OpenTK
 
 		protected override void OnUpdateFrame(FrameEventArgs e)
 		{
+			const float rotAngle = (float)Math.PI / 100;
 			base.OnUpdateFrame(e);
 			if (Keyboard[Key.Q]) {
 				Exit();
@@ -192,6 +197,15 @@ namespace Worldgen.Gui.OpenTK
 			} else if (Keyboard[Key.R]) {
 				LoadShaders(true);
 			}
+
+			if (Keyboard[Key.Right])
+				viewAngle = Quaternion.FromAxisAngle(Vector3.UnitZ, rotAngle) * viewAngle;
+			if (Keyboard[Key.Left])
+				viewAngle = Quaternion.FromAxisAngle(Vector3.UnitZ, -rotAngle) * viewAngle;
+			if (Keyboard[Key.Up])
+				viewAngle = Quaternion.FromAxisAngle(Vector3.UnitY, -rotAngle) * viewAngle;
+			if (Keyboard[Key.Down])
+				viewAngle = Quaternion.FromAxisAngle(Vector3.UnitY, rotAngle) * viewAngle;
 		}
 
 		protected override void OnRenderFrame(FrameEventArgs e)
@@ -214,23 +228,28 @@ namespace Worldgen.Gui.OpenTK
 
 
 			Matrix4 view = Matrix4.LookAt(Vector3.UnitX * 3, Vector3.Zero, Vector3.UnitZ);
-			Matrix4 model = Matrix4.Identity;
+			Matrix4 model = Matrix4.Rotate(viewAngle);
 			GL.UniformMatrix4(GL.GetUniformLocation(glslProg, "V"), false, ref view);
 			GL.UniformMatrix4(GL.GetUniformLocation(glslProg, "M"), false, ref model);
+			if (GL.GetUniformLocation(glslProg, "errp") != -1) {
+				GL.Uniform1(GL.GetUniformLocation(glslProg, "errp"), errp ? 1 : 0);
+			}
 
 			GL.BindBuffer(BufferTarget.ArrayBuffer, basemapVtxBuffer);
 			GL.BindBuffer(BufferTarget.ElementArrayBuffer, basemapFaceBuffer);
 
 			GL.EnableVertexAttribArray(0);
 			GL.VertexAttribPointer(GL.GetAttribLocation(glslProg, "vertex_m"),
-			                       3, VertexAttribPointerType.Float, false, 0, 0);
+			                       3, VertexAttribPointerType.Float, false, 24, 0);
+			/* GL.VertexAttribPointer(GL.GetAttribLocation(glslProg, "normal_m"),
+			                       3, VertexAttribPointerType.Float, false, 24, 12); */
 
 			var lightPos = new Vector3(6, 1, 1);
 			GL.Uniform3(GL.GetUniformLocation(glslProg, "lightPos_w"),
 			            ref lightPos);
 
 			for (int i = 0; i < ground.Count; i++) {
-				heightData[i] = (float)ground[i] / maxheight;
+				heightData[i] = (float)ground[i];
 			}
 			GL.BindBuffer(BufferTarget.ArrayBuffer, heightBuffer);
 			GL.BufferData(BufferTarget.ArrayBuffer,
@@ -241,7 +260,7 @@ namespace Worldgen.Gui.OpenTK
 			GL.VertexAttribPointer(GL.GetAttribLocation(glslProg, "height"),
 			                       1, VertexAttribPointerType.Float, false, 0, 0);
 			GL.Uniform1(GL.GetUniformLocation(glslProg, "maxheight"), maxheight);
-			GL.DrawElements(BeginMode.Triangles, basemapVtxData.Length, DrawElementsType.UnsignedInt, 0);
+			GL.DrawElements(BeginMode.Triangles, basemapFaceData.Length, DrawElementsType.UnsignedInt, 0);
 
 			SwapBuffers();
 		}

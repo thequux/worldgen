@@ -19,7 +19,7 @@ namespace Worldgen
 		private MainClass(string[] args)
 		{
 			// Need these for both the window and the simulation thread.
-			world = new World(new Geodesic(6));
+			world = new World(new Geodesic(7));
 
 			Thread simthread = new Thread(SimLoop);
 			simthread.Start();
@@ -34,7 +34,7 @@ namespace Worldgen
 		{
 			IRandGen rg = new RC4("Key");
 			SqueezeSphere xform = new SqueezeSphere(world, rg.Fork());
-			xform.Apply(100000000);
+			xform.Apply(1000000);
 			Grid.Dump(world.Grid, world.GetLayer(World.Height), Console.Out);
 
 		}
