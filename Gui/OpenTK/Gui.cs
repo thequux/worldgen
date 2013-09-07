@@ -5,10 +5,13 @@ using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Color = System.Drawing.Color;
 
 namespace Worldgen.Gui.OpenTK
 {
+	[StructLayout(LayoutKind.Sequential)]
+	[Serializable]
 	struct MapPoint
 	{
 		public Vector3 pos;
@@ -24,7 +27,7 @@ namespace Worldgen.Gui.OpenTK
 	public class Gui : GameWindow
 	{
 		private World world;
-		private int basemapVtxBuffer, heightBuffer, waterBuffer, basemapFaceBuffer;
+		private int basemapVtxBuffer, normalBuffer, basemapFaceBuffer;
 		private MapPoint[] basemapVtxData;
 		private uint[,] basemapFaceData;
 		private float[] heightData, waterData;
@@ -65,8 +68,8 @@ namespace Worldgen.Gui.OpenTK
 			// create data arrays...
 			GL.GenBuffers(1, out basemapVtxBuffer);
 			GL.GenBuffers(1, out basemapFaceBuffer);
-			GL.GenBuffers(1, out heightBuffer);
-			GL.GenBuffers(1, out waterBuffer);
+			GL.GenBuffers(1, out normalBuffer);
+			//GL.GenBuffers(1, out waterBuffer);
 
 			GL.BindBuffer(BufferTarget.ArrayBuffer, basemapVtxBuffer);
 			GL.BindBuffer(BufferTarget.ElementArrayBuffer, basemapFaceBuffer);
@@ -96,12 +99,10 @@ namespace Worldgen.Gui.OpenTK
 					basemapFaceData[i, 2] = (uint)face.V[0];
 				}
 			}
-			unsafe {
-				GL.BufferData(BufferTarget.ArrayBuffer,
-				              (IntPtr)(basemapVtxData.Length * sizeof(MapPoint)),
-				              basemapVtxData,
-				              BufferUsageHint.DynamicDraw);
-			}
+			GL.BufferData(BufferTarget.ArrayBuffer,
+			              (IntPtr)(basemapVtxData.Length * 24),
+			              basemapVtxData,
+			              BufferUsageHint.DynamicDraw);
 			GL.BufferData(BufferTarget.ElementArrayBuffer, 
 			              (IntPtr)(basemapFaceData.Length * sizeof(int)), 
 			              basemapFaceData, 
@@ -109,17 +110,11 @@ namespace Worldgen.Gui.OpenTK
 
 			heightData = new float[world.Grid.Count];
 			waterData = new float[world.Grid.Count];
-			GL.BindBuffer(BufferTarget.ArrayBuffer, heightBuffer);
+			GL.BindBuffer(BufferTarget.ArrayBuffer, normalBuffer);
 			GL.BufferData(BufferTarget.ArrayBuffer,
 			              (IntPtr)(heightData.Length * sizeof(float)),
 			              heightData,
 			              BufferUsageHint.DynamicDraw);
-			GL.BindBuffer(BufferTarget.ArrayBuffer, waterBuffer);
-			GL.BufferData(BufferTarget.ArrayBuffer,
-			              (IntPtr)(waterData.Length * sizeof(float)),
-			              waterData,
-			              BufferUsageHint.DynamicDraw);
-
 		}
 
 		private void LoadShaders(bool from_fs)
@@ -219,6 +214,33 @@ namespace Worldgen.Gui.OpenTK
 				viewAngle = Quaternion.FromAxisAngle(Vector3.UnitY, rotAngle) * viewAngle;
 		}
 
+		protected void UpdateNormals(float[] heights)
+		{
+			for (int i = 0; i < world.Grid.Count; i++) {
+				basemapVtxData[i].normal = Vector3.Zero;
+				//basemapVtxData[i].normal = Vector3.Zero;
+			}
+			for (int i = 0; i < basemapFaceData.GetLength(0); i++) {
+				uint v0 = basemapFaceData[i, 0];
+				uint v1 = basemapFaceData[i, 1];
+				uint v2 = basemapFaceData[i, 2];
+				MapPoint p0 = basemapVtxData[v0];
+
+				Vector3 normal = -Vector3.Normalize(
+					Vector3.Cross(basemapVtxData[v1].pos - p0.pos, basemapVtxData[v2].pos - p0.pos));
+				basemapVtxData[v0].normal += normal;
+				basemapVtxData[v1].normal += normal;
+				basemapVtxData[v2].normal += normal;
+
+				/*
+				basemapVtxData[v0].normal += normal;
+				basemapVtxData[v1].normal += normal;
+				basemapVtxData[v2].normal += normal;
+				*/
+
+			}
+		}
+
 		protected override void OnRenderFrame(FrameEventArgs e)
 		{
 			base.OnRenderFrame(e);
@@ -249,26 +271,40 @@ namespace Worldgen.Gui.OpenTK
 			GL.BindBuffer(BufferTarget.ArrayBuffer, basemapVtxBuffer);
 			GL.BindBuffer(BufferTarget.ElementArrayBuffer, basemapFaceBuffer);
 
-
+			UpdateNormals(heightData);
 			GL.EnableVertexAttribArray(0);
+			GL.EnableVertexAttribArray(GL.GetAttribLocation(glslProg, "norm_m"));
 			unsafe {
+				GL.BufferData(BufferTarget.ArrayBuffer,
+				              (IntPtr)(basemapVtxData.Length * sizeof(MapPoint)),
+				              basemapVtxData,
+				              BufferUsageHint.DynamicDraw);
+
 				GL.VertexAttribPointer(GL.GetAttribLocation(glslProg, "vertex_m"),
-				                       3, VertexAttribPointerType.Float, false, sizeof(MapPoint), 0);
-				/* GL.VertexAttribPointer(GL.GetAttribLocation(glslProg, "normal_m"),
-				                       3, VertexAttribPointerType.Float, false, 24, 12); */
+				                       3, VertexAttribPointerType.Float, false,
+				                       Marshal.SizeOf(typeof(MapPoint)),
+				                       Marshal.OffsetOf(typeof(MapPoint), "pos"));
+
+				GL.VertexAttribPointer(GL.GetAttribLocation(glslProg, "norm_m"),
+				                       3, VertexAttribPointerType.Float, false,
+				                       Marshal.SizeOf(typeof(MapPoint)),
+				                       Marshal.OffsetOf(typeof(MapPoint), "normal"));
+
+				//Marshal.OffsetOf(typeof(MapPoint), "normal"));
 			}
-			var lightPos = new Vector3(6, 1, 1);
+			var lightPos = new Vector3(6, -2, 4);
 			GL.Uniform3(GL.GetUniformLocation(glslProg, "lightPos_w"),
 			            ref lightPos);
 
 			for (int i = 0; i < ground.Count; i++) {
 				heightData[i] = (float)ground[i];
 			}
-			GL.BindBuffer(BufferTarget.ArrayBuffer, heightBuffer);
+			GL.BindBuffer(BufferTarget.ArrayBuffer, normalBuffer);
 			GL.BufferData(BufferTarget.ArrayBuffer,
 			              (IntPtr)(heightData.Length * sizeof(float)),
 			              heightData,
 			              BufferUsageHint.DynamicDraw);
+
 			GL.EnableVertexAttribArray(GL.GetAttribLocation(glslProg, "height"));
 			GL.VertexAttribPointer(GL.GetAttribLocation(glslProg, "height"),
 			                       1, VertexAttribPointerType.Float, false, 0, 0);

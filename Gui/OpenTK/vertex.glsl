@@ -1,6 +1,7 @@
 #version 130
 
 in vec3 vertex_m;
+in vec3 norm_m;
 in float height;
 
 uniform float maxheight;
@@ -33,6 +34,7 @@ void main() {
   vec3 lightPos_c = (V * vec4(lightPos_w, 1)).xyz;
   lightDirection_c = eyeDirection_c + lightPos_c;
 
-  normal_c = (V * M * vec4(normalize(vertex_m), 0)).xyz;
+  normal_c = (V * M * vec4(normalize(norm_m), 0)).xyz;
+  //normal_c = normal_m;
   //normal_c = (V * M * vec4(gl_Normal, 0)).xyz;
 }
