@@ -9,11 +9,23 @@ using Color = System.Drawing.Color;
 
 namespace Worldgen.Gui.OpenTK
 {
+	struct MapPoint
+	{
+		public Vector3 pos;
+		public Vector3 normal;
+
+		public MapPoint(Vector3 pos, Vector3 normal)
+		{
+			this.pos = pos;
+			this.normal = normal;
+		}
+	}
+
 	public class Gui : GameWindow
 	{
 		private World world;
 		private int basemapVtxBuffer, heightBuffer, waterBuffer, basemapFaceBuffer;
-		private float[,] basemapVtxData;
+		private MapPoint[] basemapVtxData;
 		private uint[,] basemapFaceData;
 		private float[] heightData, waterData;
 		private int glslProg;
@@ -59,12 +71,10 @@ namespace Worldgen.Gui.OpenTK
 			GL.BindBuffer(BufferTarget.ArrayBuffer, basemapVtxBuffer);
 			GL.BindBuffer(BufferTarget.ElementArrayBuffer, basemapFaceBuffer);
 
-			basemapVtxData = new float[world.Grid.Count, 6];
+			basemapVtxData = new MapPoint[world.Grid.Count];
 			for (int i = 0; i < world.Grid.Count; i++) {
 				Point3d pt = world.Grid.Location(i);
-				basemapVtxData[i, 0] = (float)pt.X;
-				basemapVtxData[i, 1] = (float)pt.Y;
-				basemapVtxData[i, 2] = (float)pt.Z;
+				basemapVtxData[i].pos = pt;
 			}
 
 			List<Face> faces = new List<Face>(world.Grid.Faces);
@@ -86,11 +96,12 @@ namespace Worldgen.Gui.OpenTK
 					basemapFaceData[i, 2] = (uint)face.V[0];
 				}
 			}
-
-			GL.BufferData(BufferTarget.ArrayBuffer,
-			              (IntPtr)(basemapVtxData.Length * sizeof(float)),
-			              basemapVtxData,
-			              BufferUsageHint.DynamicDraw);
+			unsafe {
+				GL.BufferData(BufferTarget.ArrayBuffer,
+				              (IntPtr)(basemapVtxData.Length * sizeof(MapPoint)),
+				              basemapVtxData,
+				              BufferUsageHint.DynamicDraw);
+			}
 			GL.BufferData(BufferTarget.ElementArrayBuffer, 
 			              (IntPtr)(basemapFaceData.Length * sizeof(int)), 
 			              basemapFaceData, 
@@ -238,12 +249,14 @@ namespace Worldgen.Gui.OpenTK
 			GL.BindBuffer(BufferTarget.ArrayBuffer, basemapVtxBuffer);
 			GL.BindBuffer(BufferTarget.ElementArrayBuffer, basemapFaceBuffer);
 
-			GL.EnableVertexAttribArray(0);
-			GL.VertexAttribPointer(GL.GetAttribLocation(glslProg, "vertex_m"),
-			                       3, VertexAttribPointerType.Float, false, 24, 0);
-			/* GL.VertexAttribPointer(GL.GetAttribLocation(glslProg, "normal_m"),
-			                       3, VertexAttribPointerType.Float, false, 24, 12); */
 
+			GL.EnableVertexAttribArray(0);
+			unsafe {
+				GL.VertexAttribPointer(GL.GetAttribLocation(glslProg, "vertex_m"),
+				                       3, VertexAttribPointerType.Float, false, sizeof(MapPoint), 0);
+				/* GL.VertexAttribPointer(GL.GetAttribLocation(glslProg, "normal_m"),
+				                       3, VertexAttribPointerType.Float, false, 24, 12); */
+			}
 			var lightPos = new Vector3(6, 1, 1);
 			GL.Uniform3(GL.GetUniformLocation(glslProg, "lightPos_w"),
 			            ref lightPos);
