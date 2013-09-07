@@ -30,7 +30,7 @@ namespace Worldgen.Gui.OpenTK
 		{
 			base.OnLoad(e);
 
-			this.LoadShaders();
+			this.LoadShaders(false);
 
 
 			GL.ClearColor(0, 0, 0, 0);
@@ -108,10 +108,17 @@ namespace Worldgen.Gui.OpenTK
 
 		}
 
-		private void LoadShaders()
+		private void LoadShaders(bool from_fs)
 		{
-			var fragSource = readResource(this.GetType(), "fragment.glsl");
-			var vtxSource = readResource(this.GetType(), "vertex.glsl");
+			string fragSource;
+			string vtxSource;
+			if (from_fs) {
+				vtxSource = System.IO.File.ReadAllText("../../Gui/OpenTK/vertex.glsl");
+				fragSource = System.IO.File.ReadAllText("../../Gui/OpenTK/fragment.glsl");
+			} else {
+				fragSource = readResource(this.GetType(), "fragment.glsl");
+				vtxSource = readResource(this.GetType(), "vertex.glsl");
+			}
 			bool hadError = false;
 			var vtx = GL.CreateShader(ShaderType.VertexShader);
 			var frag = GL.CreateShader(ShaderType.FragmentShader);
@@ -157,6 +164,7 @@ namespace Worldgen.Gui.OpenTK
 
 			return;
 			fail:
+			//if (!from_fs)
 			System.Environment.Exit(1);
 		}
 
@@ -173,9 +181,6 @@ namespace Worldgen.Gui.OpenTK
 		{
 			base.OnResize(e);
 			GL.Viewport(ClientRectangle);
-			Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI / 4, Width / (float)Height, 1.0f, 64.0f);
-
-			GL.UniformMatrix4(GL.GetUniformLocation(glslProg,"P"), false, ref projection);
 		}
 
 		protected override void OnUpdateFrame(FrameEventArgs e)
@@ -184,12 +189,17 @@ namespace Worldgen.Gui.OpenTK
 			if (Keyboard[Key.Q]) {
 				Exit();
 				System.Environment.Exit(0);
+			} else if (Keyboard[Key.R]) {
+				LoadShaders(true);
 			}
 		}
 
 		protected override void OnRenderFrame(FrameEventArgs e)
 		{
 			base.OnRenderFrame(e);
+			Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI / 4, Width / (float)Height, 1.0f, 64.0f);
+
+			GL.UniformMatrix4(GL.GetUniformLocation(glslProg,"P"), false, ref projection);
 
 			GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
@@ -215,12 +225,21 @@ namespace Worldgen.Gui.OpenTK
 			GL.VertexAttribPointer(GL.GetAttribLocation(glslProg, "vertex_m"),
 			                       3, VertexAttribPointerType.Float, false, 0, 0);
 
+			var lightPos = new Vector3(6, 1, 1);
+			GL.Uniform3(GL.GetUniformLocation(glslProg, "lightPos_w"),
+			            ref lightPos);
 
 			for (int i = 0; i < ground.Count; i++) {
-				//basemapVtxData[i, 3] = (float)ground[i];
+				heightData[i] = (float)ground[i] / maxheight;
 			}
-			//GL.VertexAttribPointer(GL.GetAttribLocation(glslProg, "height"),
-			//                       1, VertexAttribPointerType.Float, false, 4 * 4, 3 * sizeof(float));
+			GL.BindBuffer(BufferTarget.ArrayBuffer, heightBuffer);
+			GL.BufferData(BufferTarget.ArrayBuffer,
+			              (IntPtr)(heightData.Length * sizeof(float)),
+			              heightData,
+			              BufferUsageHint.DynamicDraw);
+			GL.EnableVertexAttribArray(GL.GetAttribLocation(glslProg, "height"));
+			GL.VertexAttribPointer(GL.GetAttribLocation(glslProg, "height"),
+			                       1, VertexAttribPointerType.Float, false, 0, 0);
 			GL.Uniform1(GL.GetUniformLocation(glslProg, "maxheight"), maxheight);
 			GL.DrawElements(BeginMode.Triangles, basemapVtxData.Length, DrawElementsType.UnsignedInt, 0);
 

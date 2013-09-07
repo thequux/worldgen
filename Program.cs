@@ -19,7 +19,7 @@ namespace Worldgen
 		private MainClass(string[] args)
 		{
 			// Need these for both the window and the simulation thread.
-			world = new World(new Geodesic(0));
+			world = new World(new Geodesic(6));
 
 			Thread simthread = new Thread(SimLoop);
 			simthread.Start();

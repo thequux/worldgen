@@ -14,12 +14,13 @@ varying vec3 position_w;
 varying vec3 normal_c;
 varying vec3 eyeDirection_c;
 varying vec3 lightDirection_c;
-
+varying float oheight;
 
 void main() {
 
   //float foo = height / maxheight;
-  vec3 vertex_a_m = vertex_m;
+  vec3 vertex_a_m = vertex_m * height;
+  oheight = height;
   
   mat4 MVP = P * V * M;
   gl_Position = MVP * vec4(vertex_a_m, 1.0);
