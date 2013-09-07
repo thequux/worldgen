@@ -40,7 +40,7 @@ namespace Worldgen.Geom
 			public triangle(int a, int b, int c)
 			{
 				L = new int[] { a, b, c };
-				V = new int[] { -1, -1, -1 };
+				V = new int[] { 0, 0, 0 };
 			}
 
 			public void Update(IList<biline> edges)
@@ -168,15 +168,19 @@ namespace Worldgen.Geom
 		{
 			protected Geodesic Parent;
 			int curpos;
+			bool started = false;
 
 			public GeodesicFaceEnumerator(Geodesic parent)
 			{
 				Parent = parent;
-				curpos = -1;
+				started = false;
+				curpos = 0;
 			}
 
 			public Face Current {
 				get {
+					if (!started)
+						throw new ArgumentException("Enumerator not started");
 					IList<int> vs = Parent.faces[curpos].Vertices(Parent.edges);
 					return new Face(vs[0], vs[1], vs[2]);
 				}
@@ -194,13 +198,17 @@ namespace Worldgen.Geom
 
 			bool IEnumerator.MoveNext()
 			{
-				curpos++;
+				if (!started) {
+					curpos = 0;
+					started = true;
+				} else
+					curpos++;
 				return curpos < Parent.faces.Count;
 			}
 
 			void IEnumerator.Reset()
 			{
-				curpos = -1;
+				started = false;
 			}
 		}
 

@@ -81,6 +81,13 @@ namespace Worldgen.Geom
 				+ this.Z * pt.Z;
 		}
 
+		public static Point3d Cross(Point3d p1, Point3d p2)
+		{
+			return new Point3d(p1.Y * p2.Z - p1.Z * p2.Y,
+			                   p1.Z * p2.X - p1.X * p2.Z,
+			                   p1.X * p2.Y - p2.X * p1.Y);
+		}
+
 		public override string ToString()
 		{
 			return string.Format("Point3d<{0},{1},{2}>", this.X, this.Y, this.Z);
@@ -89,6 +96,13 @@ namespace Worldgen.Geom
 		public static implicit operator Vector3d(Point3d pt)
 		{
 			return new Vector3d(pt.X, pt.Y, pt.Z);
+		}
+
+		public static implicit operator Vector3(Point3d pt)
+		{
+			return new Vector3((float)pt.X,
+			                   (float)pt.Y,
+			                   (float)pt.Z);
 		}
 #endif
 	}

@@ -12,6 +12,11 @@ namespace Worldgen.Gui.OpenTK
 	public class Gui : GameWindow
 	{
 		private World world;
+		private int basemapVtxBuffer, heightBuffer, waterBuffer, basemapFaceBuffer;
+		private float[,] basemapVtxData;
+		private uint[,] basemapFaceData;
+		private float[] heightData, waterData;
+		private int glslProg;
 		// The world's grid is not going to change, so we can cache '
 
 		public Gui(World world) 
@@ -24,9 +29,14 @@ namespace Worldgen.Gui.OpenTK
 		protected override void OnLoad(EventArgs e)
 		{
 			base.OnLoad(e);
+
+			this.LoadShaders();
+
+
 			GL.ClearColor(0, 0, 0, 0);
 			GL.Enable(EnableCap.DepthTest);
 
+#if false
 			GL.ShadeModel(ShadingModel.Flat);
 			GL.LightModel(LightModelParameter.LightModelTwoSide, 1.0f);
 			GL.Light(LightName.Light0, LightParameter.Ambient, new float[] { 1, 1, 1, 0.3f });
@@ -35,11 +45,128 @@ namespace Worldgen.Gui.OpenTK
 			GL.Enable(EnableCap.Lighting);
 			GL.Enable(EnableCap.Light0);
 
+#endif
+
+			// create data arrays...
+			GL.GenBuffers(1, out basemapVtxBuffer);
+			GL.GenBuffers(1, out basemapFaceBuffer);
+			GL.GenBuffers(1, out heightBuffer);
+			GL.GenBuffers(1, out waterBuffer);
+
+			GL.BindBuffer(BufferTarget.ArrayBuffer, basemapVtxBuffer);
+			GL.BindBuffer(BufferTarget.ElementArrayBuffer, basemapFaceBuffer);
+
+			basemapVtxData = new float[world.Grid.Count, 3];
+			for (int i = 0; i < world.Grid.Count; i++) {
+				Point3d pt = world.Grid.Location(i);
+				basemapVtxData[i, 0] = (float)pt.X;
+				basemapVtxData[i, 1] = (float)pt.Y;
+				basemapVtxData[i, 2] = (float)pt.Z;
+			}
+
+			List<Face> faces = new List<Face>(world.Grid.Faces);
+			basemapFaceData = new uint[faces.Count, 3];
+			for (int i = 0; i < faces.Count; i++) {
+				var face = faces[i];
+				var gr = world.Grid;
+				var normal = Vector3.Cross(gr.Location(face.V[1]) - gr.Location(face.V[0]),
+				                           gr.Location(face.V[2]) - gr.Location(face.V[0]));
+				if (Vector3.Dot(normal, gr.Location(face.V[0])) > 0) { // BUG: this might be inverted.
+					//if ((i % 2) == 0) {
+					// outward-facing, use vertices as given
+					basemapFaceData[i, 0] = (uint)face.V[0];
+					basemapFaceData[i, 1] = (uint)face.V[1];
+					basemapFaceData[i, 2] = (uint)face.V[2];
+				} else {
+					basemapFaceData[i, 0] = (uint)face.V[2];
+					basemapFaceData[i, 1] = (uint)face.V[1];
+					basemapFaceData[i, 2] = (uint)face.V[0];
+				}
+			}
+
+			GL.BufferData(BufferTarget.ArrayBuffer,
+			              (IntPtr)(basemapVtxData.Length * sizeof(float)),
+			              basemapVtxData,
+			              BufferUsageHint.DynamicDraw);
+			GL.BufferData(BufferTarget.ElementArrayBuffer, 
+			              (IntPtr)(basemapFaceData.Length * sizeof(int)), 
+			              basemapFaceData, 
+			              BufferUsageHint.DynamicDraw);
+
+			heightData = new float[world.Grid.Count];
+			waterData = new float[world.Grid.Count];
+			GL.BindBuffer(BufferTarget.ArrayBuffer, heightBuffer);
+			GL.BufferData(BufferTarget.ArrayBuffer,
+			              (IntPtr)(heightData.Length * sizeof(float)),
+			              heightData,
+			              BufferUsageHint.DynamicDraw);
+			GL.BindBuffer(BufferTarget.ArrayBuffer, waterBuffer);
+			GL.BufferData(BufferTarget.ArrayBuffer,
+			              (IntPtr)(waterData.Length * sizeof(float)),
+			              waterData,
+			              BufferUsageHint.DynamicDraw);
+
 		}
 
 		private void LoadShaders()
 		{
-			var assem = this.GetType().Assembly;
+			var fragSource = readResource(this.GetType(), "fragment.glsl");
+			var vtxSource = readResource(this.GetType(), "vertex.glsl");
+			bool hadError = false;
+			var vtx = GL.CreateShader(ShaderType.VertexShader);
+			var frag = GL.CreateShader(ShaderType.FragmentShader);
+			GL.ShaderSource(vtx, vtxSource);
+			GL.ShaderSource(frag, fragSource);
+			GL.CompileShader(vtx);
+			GL.CompileShader(frag);
+			int compileStatus;
+
+			GL.GetShader(vtx, ShaderParameter.CompileStatus, out compileStatus);
+			if (compileStatus == 0) {
+				Console.Error.WriteLine("Error compiling vertex shader:\n{0}", GL.GetShaderInfoLog(vtx));
+				Console.Error.Flush();
+				hadError = true;
+			}
+			GL.GetShader(frag, ShaderParameter.CompileStatus, out compileStatus);
+			if (compileStatus == 0) {
+				Console.Error.WriteLine("Error compiling fragment shader:\n{0}", GL.GetShaderInfoLog(frag));
+				Console.Error.Flush();
+				hadError = true;
+			}
+
+			if (hadError)
+				goto fail;
+			int prog = GL.CreateProgram();
+			GL.AttachShader(prog, vtx);
+			GL.AttachShader(prog, frag);
+
+			GL.LinkProgram(prog);
+			GL.GetProgram(prog, ProgramParameter.LinkStatus, out compileStatus);
+			if (compileStatus == 0) {
+				Console.Error.WriteLine("Error linking shaders:\n{0}", GL.GetProgramInfoLog(prog));
+				Console.Error.Flush();
+				goto fail;
+			}
+			glslProg = prog;
+			GL.UseProgram(prog);
+			GL.DeleteShader(vtx);
+			GL.DeleteShader(frag);
+
+			int numParams;
+			GL.GetProgram(prog, ProgramParameter.ActiveAttributes, out numParams);
+
+			return;
+			fail:
+			System.Environment.Exit(1);
+		}
+
+		private string readResource(Type type, string name)
+		{
+			var rsrc = this.GetType().Assembly.GetManifestResourceStream(type, name);
+			var buf = new byte[rsrc.Length];
+			rsrc.Read(buf, 0, (int)rsrc.Length);
+
+			return new System.Text.UTF8Encoding(false, true).GetString(buf);
 		}
 
 		protected override void OnResize(EventArgs e)
@@ -47,17 +174,17 @@ namespace Worldgen.Gui.OpenTK
 			base.OnResize(e);
 			GL.Viewport(ClientRectangle);
 			Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI / 4, Width / (float)Height, 1.0f, 64.0f);
-			GL.MatrixMode(MatrixMode.Projection);
-			GL.LoadMatrix(ref projection);
 
-		
+			GL.UniformMatrix4(GL.GetUniformLocation(glslProg,"P"), false, ref projection);
 		}
 
 		protected override void OnUpdateFrame(FrameEventArgs e)
 		{
 			base.OnUpdateFrame(e);
-			if (Keyboard[Key.Q])
+			if (Keyboard[Key.Q]) {
 				Exit();
+				System.Environment.Exit(0);
+			}
 		}
 
 		protected override void OnRenderFrame(FrameEventArgs e)
@@ -66,7 +193,7 @@ namespace Worldgen.Gui.OpenTK
 
 			GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-			world.Mtx.WaitOne();
+			//world.Mtx.WaitOne();
 			IList<double> ground = world.GetLayer(World.Height);
 
 			float maxheight = 0;
@@ -75,23 +202,29 @@ namespace Worldgen.Gui.OpenTK
 					maxheight = (float)h;
 			}
 
-			Matrix4 modelView = Matrix4.LookAt(Vector3.UnitX * 3, Vector3.Zero, Vector3.UnitZ);
-			GL.MatrixMode(MatrixMode.Modelview);
-			GL.LoadMatrix(ref modelView);
+
+			Matrix4 view = Matrix4.LookAt(Vector3.UnitX * 3, Vector3.Zero, Vector3.UnitZ);
+			Matrix4 model = Matrix4.Identity;
+			GL.UniformMatrix4(GL.GetUniformLocation(glslProg, "V"), false, ref view);
+			GL.UniformMatrix4(GL.GetUniformLocation(glslProg, "M"), false, ref model);
+
+			GL.BindBuffer(BufferTarget.ArrayBuffer, basemapVtxBuffer);
+			GL.BindBuffer(BufferTarget.ElementArrayBuffer, basemapFaceBuffer);
+
+			GL.EnableVertexAttribArray(0);
+			GL.VertexAttribPointer(GL.GetAttribLocation(glslProg, "vertex_m"),
+			                       3, VertexAttribPointerType.Float, false, 0, 0);
 
 
-			GL.Light(LightName.Light0, LightParameter.Position, new float[] { 4f, 1f, 1f, 0f });
-			GL.Begin(BeginMode.Triangles);
-			GL.Color3(Color.Beige);
-			foreach (var face in world.Grid.Faces) {
-				for (int i = 0; i < 3; i++)
-					GL.Vertex3(world.Grid.Location(face.V[i]) * ground[face.V[i]] / maxheight);
+			for (int i = 0; i < ground.Count; i++) {
+				//basemapVtxData[i, 3] = (float)ground[i];
 			}
-			GL.End();
+			//GL.VertexAttribPointer(GL.GetAttribLocation(glslProg, "height"),
+			//                       1, VertexAttribPointerType.Float, false, 4 * 4, 3 * sizeof(float));
+			GL.Uniform1(GL.GetUniformLocation(glslProg, "maxheight"), maxheight);
+			GL.DrawElements(BeginMode.Triangles, basemapVtxData.Length, DrawElementsType.UnsignedInt, 0);
 
-			world.Mtx.ReleaseMutex();
 			SwapBuffers();
 		}
 	}
 }
-

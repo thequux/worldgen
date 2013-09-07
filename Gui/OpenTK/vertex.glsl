@@ -1,8 +1,35 @@
-#version 330 core
+#version 130
 
-layout(location = 0) in vec3 vertexPosition_modelspace;
+in vec3 vertex_m;
+in float height;
+
+uniform float maxheight;
+uniform vec3 lightPos_w;
+uniform mat4 P;
+uniform mat4 M;
+uniform mat4 V;
+
+
+varying vec3 position_w;
+varying vec3 normal_c;
+varying vec3 eyeDirection_c;
+varying vec3 lightDirection_c;
+
 
 void main() {
-  gl_Position.xyz = vertexPosition_modelspace;
-  gl_Position.w = 1.0;
+
+  //float foo = height / maxheight;
+  vec3 vertex_a_m = vertex_m;
+  
+  mat4 MVP = P * V * M;
+  gl_Position = MVP * vec4(vertex_a_m, 1.0);
+  position_w = (M * vec4(vertex_a_m, 1.0)).xyz;
+  
+  vec3 vertex_c = (V * M * vec4(vertex_a_m, 1)).xyz;
+  eyeDirection_c = -vertex_c;
+
+  vec3 lightPos_c = (V * vec4(lightPos_w, 1)).xyz;
+  lightDirection_c = lightPos_c + eyeDirection_c;
+
+  normal_c = (V * M * vec4(gl_Normal, 0)).xyz;
 }
