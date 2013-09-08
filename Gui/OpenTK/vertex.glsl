@@ -31,7 +31,7 @@ void main() {
   vertex_c = (V * M * vec4(vertex_a_m, 1)).xyz;
   eyeDirection_c = -vertex_c;
 
-  vec3 lightPos_c = (V * vec4(lightPos_w, 1)).xyz;
+  vec3 lightPos_c = (V * vec4(lightPos_w + vec3(4,-4,4), 1)).xyz;
   lightDirection_c = eyeDirection_c + lightPos_c;
 
   normal_c = (V * M * vec4(normalize(norm_m), 0)).xyz;

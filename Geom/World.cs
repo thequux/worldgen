@@ -22,7 +22,7 @@ namespace Worldgen.Geom
 			Mtx = new Mutex();
 			Grid = g;
 			Layers = new Dictionary<ObjectWithID, System.Collections.IList>();
-			AddLayer(Height, Uniform(6378.1));
+			AddLayer(Height, Uniform(6378.1 - 300));
 
 		}
 

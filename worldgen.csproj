@@ -67,6 +67,8 @@
     <Compile Include="Util\ProgressBar.cs" />
     <Compile Include="Util\StringExts.cs" />
     <Compile Include="Gui\OpenTK\Gui.cs" />
+    <Compile Include="Gui\OpenTK\Widget.cs" />
+    <Compile Include="Transform\ParticleDeposition.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>

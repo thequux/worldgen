@@ -76,6 +76,34 @@ namespace Worldgen.Util
 			// Random point in the unit cube at the origin. ( [0,1), [0,1), [0,1) )
 			return new Geom.Point3d(gen.NextDouble(), gen.NextDouble(), gen.NextDouble());
 		}
+
+		public static uint NextInRange(this IRandGen gen, uint max)
+		{
+			// returns a random int between 0 and max, inclusive
+
+			if (max == uint.MaxValue) // get rid of a boundary condition
+				return gen.NextUint();
+
+			// How many values at the high end of the range need to be thrown away
+			uint deadZone = uint.MaxValue % (max + 1) + 1;
+			if (deadZone == max + 1) {
+				// uint.range is evenly divisible by max+1
+				return gen.NextUint() % (max + 1);
+			}
+
+			uint maxAccept = uint.MaxValue - deadZone;
+			// maxaccept is now one less than a multiple of max+1
+			// thus, if n is a random number in [0, maxAccept], 
+			// (n%(max+1)) is a uniform random number in [0,max]
+
+			uint rn;
+			do {
+				rn = gen.NextUint();
+			} while (rn > maxAccept);
+
+			return rn % (max + 1);
+
+		}
 	}
 }
 

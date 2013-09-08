@@ -152,9 +152,9 @@ namespace Worldgen.Geom
 			return vertices[idx];
 		}
 
-		public override IEnumerable<int> Neighbors(int point)
+		public override IList<int> Neighbors(int point)
 		{
-			return _Neighbors[point];
+			return new List<int>(_Neighbors[point]);
 		}
 
 		public override int Count {

@@ -29,7 +29,7 @@ namespace Worldgen.Geom
 
 		public abstract Point3d Location(int index);
 
-		public abstract IEnumerable<int> Neighbors(int index);
+		public abstract IList<int> Neighbors(int index);
 
 		public abstract IEnumerable<Face> Faces {
 			get;

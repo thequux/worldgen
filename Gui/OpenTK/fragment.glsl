@@ -21,7 +21,7 @@ void main() {
 
   float waterlevel = 6378.1;
   vec3 lightColor = vec3(1,1,1);
-  float lightPower = 30.0f;
+  float lightPower = 50.0f;
 
   bool drawLine = fract((oheight - waterlevel) / 60) < 0.05;
   bool underwater = oheight < waterlevel;
@@ -46,7 +46,7 @@ void main() {
   //color = vec3(fd,0,0);
   color.rgb = materialAmbientColor +
     materialDiffuseColor * lightColor * lightPower * cosTheta / pow(distance, 2) +
-    materialSpecularColor * lightColor * lightPower * pow(cosAlpha, 5) / pow(distance, 2);
+    materialSpecularColor * lightColor * lightPower * cosAlpha / pow(distance, 2);
 
   //color.rgb = 0.5-normal_c;
   // debugging aid: invert colors on error.
