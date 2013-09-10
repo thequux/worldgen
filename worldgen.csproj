@@ -49,6 +49,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Gui\OpenTK\fragment.glsl" />
     <EmbeddedResource Include="Gui\OpenTK\vertex.glsl" />
+    <EmbeddedResource Include="Gui\OpenTK\font.png" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
@@ -69,6 +70,7 @@
     <Compile Include="Gui\OpenTK\Gui.cs" />
     <Compile Include="Gui\OpenTK\Widget.cs" />
     <Compile Include="Transform\ParticleDeposition.cs" />
+    <Compile Include="Gui\OpenTK\TextRenderer.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
